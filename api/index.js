@@ -74,11 +74,11 @@ app.post("/webhook", async (req, res) => {
     console.log("Webhook received:", JSON.stringify(req.body, null, 2));
 
     // Convert webhook data to a formatted message
-    let message = `📩 *New Webhook Received*\n\n\`\`\`json\n${
+    let message = `📩 *New Webhook Received*\n\n\`\`\`json\n${JSON.stringify(
       req.body,
       null,
       2
-    }\n\`\`\``;
+    )}\n\`\`\``;
 
     // Send message to Telegram
     await sendMessageToTelegram(message);
