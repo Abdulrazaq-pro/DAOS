@@ -74,11 +74,11 @@ app.post("/webhook", async (req, res) => {
     console.log("Webhook received:", JSON.stringify(req.body, null, 2));
 
     // Convert webhook data to a formatted message
-    let message = `📩 *New Webhook Received*\n\n\`\`\`json\n${JSON.stringify(
+    let message = `📩 *New Webhook Received*\n\n\`\`\`json\n${
       req.body,
       null,
       2
-    )}\n\`\`\``;
+    }\n\`\`\``;
 
     // Send message to Telegram
     await sendMessageToTelegram(message);
@@ -92,23 +92,6 @@ app.post("/webhook", async (req, res) => {
 
 
 
-async function getCryptoPrices() {
-  try {
-    const response = await axios.get(
-      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,staked-ether,wrapped-ether,bitcoin&vs_currencies=usd"
-    );
-    return {
-      ETH: response.data.ethereum.usd,
-      wstETH: response.data["staked-ether"].usd,
-      WETH: response.data["wrapped-ether"].usd,
-      cbBTC: response.data.bitcoin.usd,
-      bitcoin: response.data.bitcoin.usd,
-    };
-  } catch (error) {
-    console.error("Error fetching prices from CoinGecko:", error);
-    return null;
-  }
-}
 
 async function sendMessageToTelegram(message) {
   try {
