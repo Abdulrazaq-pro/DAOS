@@ -16,7 +16,7 @@ const TREASURY_ADDRESSES = {
 };
 
 // Monitored Assets
-const MONITORED_ASSETS = new Set(["ETH", "wstETH", "WETH", "cbBTC"]);
+const MONITORED_ASSETS = new Set(["ETH", "wstETH", "WETH",  "bitcoin"]);
 
 app.use(express.json());
 
@@ -25,10 +25,11 @@ app.post("/webhook", async (req, res) => {
     const { event } = req.body;
     if (!event || !event.activity) return res.sendStatus(400);
 
+    let prices = await getCryptoPrices();
     let messages = [];
 
     event.activity.forEach((tx) => {
-      if (MONITORED_ASSETS.has(tx.asset)) {
+      if (MONITORED_ASSETS.has(tx.asset) && prices) {
         let daoName = Object.keys(TREASURY_ADDRESSES).find(
           (key) =>
             TREASURY_ADDRESSES[key].toLowerCase() ===
@@ -43,10 +44,13 @@ app.post("/webhook", async (req, res) => {
             tx.toAddress.toLowerCase()
               ? "Received"
               : "Sent";
+          let usdValue = (tx.value * prices[tx.asset]).toFixed(2);
+
           let message =
             `📢 *${daoName} Treasury Update*\n\n` +
             `🔹 Asset: ${tx.asset}\n` +
             `🔹 Amount: ${tx.value}\n` +
+            `💰 USD Value: $${usdValue}\n` +
             `🔹 Action: ${action}\n` +
             `🔹 Tx: [View on Etherscan](https://etherscan.io/tx/${tx.hash})`;
           messages.push(message);
@@ -65,6 +69,25 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
+
+async function getCryptoPrices() {
+  try {
+    const response = await axios.get(
+      "https://api.coingecko.com/api/v3/simple/price?ids=ethereum,staked-ether,wrapped-ether,bitcoin&vs_currencies=usd"
+    );
+    return {
+      ETH: response.data.ethereum.usd,
+      wstETH: response.data["staked-ether"].usd,
+      WETH: response.data["wrapped-ether"].usd,
+      cbBTC: response.data.bitcoin.usd,
+      bitcoin: response.data.bitcoin.usd,
+    };
+  } catch (error) {
+    console.error("Error fetching prices from CoinGecko:", error);
+    return null;
+  }
+}
+
 async function sendMessageToTelegram(message) {
   try {
     await axios.post(
@@ -79,8 +102,19 @@ async function sendMessageToTelegram(message) {
     console.error("Error sending message to Telegram:", error);
   }
 }
+
+
+
+// Coin gecko integration
+
+
 app.get("/", (req, res) => {
   res.send("Webhook server is running!");
+});
+
+app.post("/webhook", async (req, res) => {
+  console.log("Webhook received:", JSON.stringify(req.body, null, 2));
+  res.sendStatus(200); // Early response
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
