@@ -16,7 +16,7 @@ const TREASURY_ADDRESSES = {
 };
 
 // Monitored Assets
-const MONITORED_ASSETS = new Set(["ETH", "wstETH", "WETH",  "bitcoin"]);
+const MONITORED_ASSETS = new Set(["ETH", "wstETH", "WETH", "bitcoin"]);
 
 app.use(express.json());
 
@@ -90,9 +90,6 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-
-
-
 async function sendMessageToTelegram(message) {
   try {
     await axios.post(
@@ -108,15 +105,10 @@ async function sendMessageToTelegram(message) {
   }
 }
 
-
-
 // Coin gecko integration
-
 
 app.get("/", (req, res) => {
   res.send("Webhook server is running!");
 });
-
-
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
