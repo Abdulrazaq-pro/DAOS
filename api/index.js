@@ -22,7 +22,33 @@ const MONITORED_ASSETS = new Set(["ETH", "wstETH", "WETH", "bitcoin"]);
 
 app.use(express.json());
 
+// CoinGecko Price Fetching Function
+async function getCryptoPrices() {
+  try {
+    const response = await axios.get(
+      "https://api.coingecko.com/api/v3/simple/price",
+      {
+        params: {
+          ids: "ethereum,bitcoin,wrapped-steth",
+          vs_currencies: "usd",
+        },
+      }
+    );
+    return {
+      ETH: response.data.ethereum.usd,
+      WETH: response.data.ethereum.usd,
+      wstETH: response.data["wrapped-steth"].usd,
+      bitcoin: response.data.bitcoin.usd,
+    };
+  } catch (error) {
+    console.error("Error fetching crypto prices:", error);
+    return null;
+  }
+}
+
 app.post("/webhook", async (req, res) => {
+  console.log("Received webhook payload:", JSON.stringify(req.body, null, 2));
+
   try {
     const { event } = req.body;
     if (!event || !event.activity) return res.sendStatus(400);
@@ -71,11 +97,9 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-
-
 async function sendMessageToTelegram(message) {
   try {
-    await axios.post(
+    const response = await axios.post(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         chat_id: TELEGRAM_CHAT_ID,
@@ -83,14 +107,16 @@ async function sendMessageToTelegram(message) {
         parse_mode: "Markdown",
       }
     );
+    console.log("Telegram message response:", response.data);
   } catch (error) {
-    console.error("Error sending message to Telegram:", error);
+    console.error(
+      "Error sending message to Telegram:",
+      error.response ? error.response.data : error.message
+    );
   }
 }
 
-// Coin gecko integration
-
-app.get("/test", async (req, res) => {
+app.all("/test", async (req, res) => {
   try {
     const testMessage = "🚀 Test message from your webhook server!";
     await sendMessageToTelegram(testMessage);
@@ -100,7 +126,6 @@ app.get("/test", async (req, res) => {
     res.status(500).send("Failed to send test message.");
   }
 });
-
 
 app.get("/", (req, res) => {
   res.send("Webhook server is running!");
