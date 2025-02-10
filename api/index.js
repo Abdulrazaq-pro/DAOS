@@ -90,6 +90,18 @@ async function sendMessageToTelegram(message) {
 
 // Coin gecko integration
 
+app.get("/test", async (req, res) => {
+  try {
+    const testMessage = "🚀 Test message from your webhook server!";
+    await sendMessageToTelegram(testMessage);
+    res.send("Test message sent to Telegram!");
+  } catch (error) {
+    console.error("Error sending test message:", error);
+    res.status(500).send("Failed to send test message.");
+  }
+});
+
+
 app.get("/", (req, res) => {
   res.send("Webhook server is running!");
 });
